@@ -15,11 +15,11 @@ ENGINE_OPTIONS = {
 
 HTML_INTERFACE = """
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>SnezkaChess Premium Analysis</title>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    <meta charset="UTF-8">
+    <title>SnezkaChess Pro Analysis</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cm-chessboard@4.3.0/assets/styles/cm-chessboard.css">
     <style>
         :root {
             --bg-main: #161512;
@@ -32,7 +32,7 @@ HTML_INTERFACE = """
             --border: #403c38;
         }
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             background: var(--bg-main); 
             color: var(--text); 
             margin: 0; 
@@ -42,216 +42,275 @@ HTML_INTERFACE = """
         }
         .main-wrapper {
             display: flex;
-            gap: 25px;
-            max-width: 1100px;
+            gap: 30px;
+            max-width: 1200px;
             width: 100%;
             flex-wrap: wrap;
+            justify-content: center;
         }
         .board-container {
             flex: 0 0 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-        #myBoard {
+        /* Стилизация современной доски под Lichess */
+        .chessboard {
             width: 100%;
             border-radius: 4px;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .chessboard .board.brown {
+            background-color: #b58863;
+        }
+        .chessboard .square.black {
+            background-color: #b58863 !important;
+        }
+        .chessboard .square.white {
+            background-color: #f0d9b5 !important;
+        }
+        /* Маркер подсветки возможных ходов */
+        .chessboard .marker-dot {
+            background: rgba(0, 0, 0, 0.15) !important;
+            border-radius: 50%;
+            width: 30% !important;
+            height: 30% !important;
+            position: absolute;
+            top: 35%;
+            left: 35%;
         }
         .panel {
             flex: 1;
-            min-width: 350px;
+            min-width: 380px;
             background: var(--bg-panel);
-            border-radius: 6px;
-            padding: 20px;
+            border-radius: 8px;
+            padding: 25px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
-        h2 { margin-top: 0; color: var(--text-light); border-bottom: 1px solid var(--border); padding-bottom: 10px; font-weight: 600; }
-        h3 { color: var(--text-light); margin-bottom: 10px; font-size: 16px; }
+        h2 { margin-top: 0; color: var(--text-light); font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        h3 { color: var(--text-light); margin: 20px 0 10px 0; font-size: 16px; }
         textarea { 
             width: 100%; background: var(--bg-input); border: 1px solid var(--border); 
-            color: #fff; padding: 10px; margin-bottom: 15px; box-sizing: border-box; 
-            border-radius: 4px; resize: vertical; font-family: monospace;
+            color: #fff; padding: 12px; margin-bottom: 15px; box-sizing: border-box; 
+            border-radius: 4px; resize: vertical; font-family: monospace; font-size: 13px;
         }
-        .row { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
-        .row input { 
-            background: var(--bg-input); border: 1px solid var(--border); color: #fff; 
-            padding: 8px; width: 70px; border-radius: 4px; text-align: center;
-        }
+        .button-group { display: flex; gap: 10px; margin-bottom: 15px; }
         button { 
             background: var(--accent); color: white; border: none; padding: 12px 20px; 
-            font-weight: bold; cursor: pointer; border-radius: 4px; width: 100%;
-            transition: background 0.2s; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;
+            font-weight: bold; cursor: pointer; border-radius: 4px;
+            transition: background 0.15s; font-size: 14px; text-transform: uppercase;
         }
         button:hover { background: var(--accent-hover); }
-        .btn-secondary { background: #45423e; margin-top: 8px; text-transform: none; font-size: 13px; padding: 8px; }
+        .btn-flex { flex: 1; }
+        .btn-secondary { background: #45423e; text-transform: none; padding: 8px 12px; font-size: 13px; }
         .btn-secondary:hover { background: #5a5752; }
+        .btn-danger { background: #b64c4c; }
+        .btn-danger:hover { background: #d16c6c; }
         
         #eval-box { 
             background: var(--bg-main); padding: 15px; border-radius: 4px; 
-            margin-top: 15px; border-left: 4px solid var(--accent);
+            border-left: 4px solid var(--accent); margin-bottom: 15px;
         }
-        .eval-line { margin-bottom: 6px; font-size: 14px; }
+        .eval-line { margin-bottom: 8px; font-size: 14px; }
         .eval-line strong { color: var(--text-light); }
         
-        /* Стили для Блока Сохранений */
         .history-section {
-            margin-top: 20px;
             border-top: 1px solid var(--border);
             padding-top: 15px;
-            flex-grow: 1;
             display: flex;
             flex-direction: column;
+            flex-grow: 1;
         }
         .history-list {
             list-style: none; padding: 0; margin: 10px 0 0 0;
-            max-height: 180px; overflow-y: auto;
+            max-height: 150px; overflow-y: auto;
         }
         .history-item {
-            background: var(--bg-input); padding: 8px 12px; margin-bottom: 6px;
+            background: var(--bg-input); padding: 10px 12px; margin-bottom: 6px;
             border-radius: 4px; display: flex; justify-content: space-between;
-            align-items: center; font-size: 13px; cursor: pointer; transition: background 0.2s;
+            align-items: center; font-size: 13px; cursor: pointer;
         }
         .history-item:hover { background: #3d3935; }
-        .history-item .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; color: #fff; }
-        .delete-btn { color: #ff5252; border: none; background: none; cursor: pointer; font-weight: bold; width: auto; padding: 0 5px; }
-        .delete-btn:hover { color: #ff7d7d; background: none; }
+        .history-item .title { color: #fff; font-weight: 500; }
     </style>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
 </head>
 <body>
 
 <div class="main-wrapper">
     <div class="board-container">
-        <div id="myBoard"></div>
-        <button class="btn-secondary" onclick="copyCurrentFen()">📋 Скопировать текущий FEN</button>
+        <div id="myBoard" class="chessboard"></div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-secondary btn-flex" onclick="board.setOrientation(board.getOrientation() === 'white' ? 'black' : 'white')">🔄 Перевернуть</button>
+            <button class="btn-secondary btn-flex" onclick="copyCurrentFen()">📋 Копировать FEN</button>
+            <button class="btn-secondary btn-flex btn-danger" onclick="resetBoard()">重 Сброс</button>
+        </div>
     </div>
 
     <div class="panel">
-        <h2>SnezkaChess Engine v1.0</h2>
+        <h2>SnezkaChess Premium</h2>
         
-        <label>Вставьте FEN-позицию или PGN-партию:</label>
-        <textarea id="inputData" rows="4" placeholder="1. e4 e5 2. Nf3... или FEN строка"></textarea>
+        <label>Вставьте FEN или PGN (или просто двигайте фигуры):</label>
+        <textarea id="inputData" rows="3" placeholder="1. e4 e5 2. Nf3... или FEN строка"></textarea>
         
-        <div class="row">
-            <label>Глубина Stockfish (10-20):</label>
-            <input type="number" id="depthInput" value="14" min="5" max="20">
+        <div class="button-group">
+            <button class="btn-flex" onclick="sendToVPS()">Анализ на VPS</button>
         </div>
         
-        <button onclick="sendToVPS()">Запустить анализ на VPS</button>
-        
         <div id="eval-box">
-            <div class="eval-line"><strong>Статус VPS:</strong> <span id="status" style="color: #e2b714;">Ожидание команды</span></div>
+            <div class="eval-line"><strong>Статус:</strong> <span id="status" style="color: #e2b714;">Ожидание ходов</span></div>
             <div class="eval-line"><strong>Лучший ход:</strong> <span id="bestMove" style="color: #fff; font-weight: bold;">-</span></div>
-            <div class="eval-line"><strong>Оценка позиции:</strong> <span id="evaluation" style="color: var(--accent); font-weight: bold;">-</span></div>
+            <div class="eval-line"><strong>Оценка:</strong> <span id="evaluation" style="color: var(--accent); font-weight: bold;">-</span></div>
         </div>
 
         <div class="history-section">
-            <h3>💾 Сохраненные партии (В браузере)</h3>
+            <h3>💾 Локальные сохранения</h3>
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="saveName" placeholder="Название партии" style="flex: 1; width: auto; margin: 0; background: var(--bg-input); border: 1px solid var(--border); color:#fff; padding:8px; border-radius:4px;">
-                <button onclick="saveCurrentGame()" style="width: auto; padding: 0 15px; font-size: 13px;">Сохранить</button>
+                <input type="text" id="saveName" placeholder="Название записи" style="flex: 1; background: var(--bg-input); border: 1px solid var(--border); color:#fff; padding:8px; border-radius:4px;">
+                <button onclick="saveCurrentGame()" style="padding: 0 15px; font-size: 12px;">Сохранить</button>
             </div>
             <ul id="historyList" class="history-list"></ul>
         </div>
     </div>
 </div>
 
-<script>
-    var board;
-    var currentLoadedFen = 'start';
+<script type="module">
+    import { Chessboard, BORDER_TYPE } from "https://cdn.jsdelivr.net/npm/cm-chessboard@4.3.0/src/cm-chessboard/Chessboard.js";
+    import { MOVE_INPUT_MODE } from "https://cdn.jsdelivr.net/npm/cm-chessboard@4.3.0/src/cm-chessboard/extensions/move-input/MoveInput.js";
+    import { Chess } from "https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.js";
 
-    // Инициализация доски
-    $(document).ready(function() {
-        board = ChessBoard('myBoard', {
-            draggable: true,
-            dropOffBoard: 'trash',
-            sparePieces: false,
-            position: 'start',
-            onChange: function(oldPos, newPos) {
-                // Синхронизируем внутренний FEN при ручном движении фигур
-                setTimeout(function() {
-                    currentLoadedFen = board.fen();
-                }, 100);
-            }
-        });
-        renderHistory();
+    window.chess = new Chess();
+    
+    // Кастомный набор фигур напрямую с серверов Lichess
+    const LICHESS_PIECES = "https://lichess1.org/assets/piece/cburnett/#piece#.svg";
+
+    window.board = new Chessboard(document.getElementById("myBoard"), {
+        position: "start",
+        assetsUrl: "https://cdn.jsdelivr.net/npm/cm-chessboard@4.3.0/assets/",
+        style: { pieces: { type: "custom", url: LICHESS_PIECES, size: 40 } },
+        borderType: BORDER_TYPE.none
     });
 
-    // Анализ на сервере
+    // Включаем полноценный ввод ходов с проверкой правил
+    window.board.enableMoveInput((event) => {
+        switch (event.type) {
+            case MOVE_INPUT_MODE.moveStart:
+                // Подсвечиваем легальные ходы при клике на фигуру
+                const moves = window.chess.moves({ square: event.square, verbose: true });
+                moves.forEach(move => window.board.addMarker(move.to, { class: "marker-dot" }));
+                return true;
+            case MOVE_INPUT_MODE.moveDone:
+                window.board.removeMarkers();
+                const move = window.chess.move({ from: event.squareFrom, to: event.squareTo, promotion: "q" });
+                if (move) {
+                    // Если ход валидный, обновляем доску и поле ввода
+                    window.board.setPosition(window.chess.fen(), true);
+                    document.getElementById("inputData").value = window.chess.fen();
+                    return true;
+                }
+                return false;
+            case MOVE_INPUT_MODE.moveCanceled:
+                window.board.removeMarkers();
+                break;
+        }
+    });
+
+    window.syncWithText = function(data) {
+        if (!data) return;
+        let validated = new Chess();
+        if (data.startsWith('1.') || data.includes(' ')) {
+            if (validated.load_pgn(data)) { window.chess = validated; }
+            else if (validated.load(data)) { window.chess = validated; }
+        } else {
+            if (validated.load(data)) { window.chess = validated; }
+        }
+        window.board.setPosition(window.chess.fen(), true);
+    };
+</script>
+
+<script>
     function sendToVPS() {
-        var data = $('#inputData').val().trim();
-        var depth = $('#depthInput').val();
-        if(!data) { data = board.fen(); } // Если поле пустое, анализируем текущую позицию на доске
+        // Синхронизируем текст с доской перед отправкой
+        var textData = $('#inputData').val().trim();
+        if (textData && typeof window.syncWithText === 'function') {
+            window.syncWithText(textData);
+        }
         
-        $('#status').text('Stockfish думает...').style = "color: #e2b714;";
+        var currentFen = window.chess ? window.chess.fen() : 'start';
+        var depth = $('#depthInput').val() || 14;
         
-        $.post('/analyze', { data: data, depth: depth }, function(res) {
+        $('#status').text('Stockfish анализирует...').css('color', '#e2b714');
+        
+        $.post('/analyze', { data: currentFen, depth: depth }, function(res) {
             if(res.error) {
                 $('#status').text('Ошибка: ' + res.error).css('color', '#ff5252');
             } else {
-                $('#status').text('Расчет окончен').css('color', '#81b64c');
+                $('#status').text('Анализ завершен').css('color', '#81b64c');
                 $('#bestMove').text(res.best_move);
                 $('#evaluation').text(res.evaluation);
-                board.position(res.current_fen);
-                currentLoadedFen = res.current_fen;
             }
         }).fail(function() {
-            $('#status').text('VPS недоступен (проверьте порт 5000 без HTTPS)').css('color', '#ff5252');
+            $('#status').text('Ошибка сети VPS').css('color', '#ff5252');
         });
     }
 
-    function copyCurrentFen() {
-        navigator.clipboard.writeText(currentLoadedFen);
-        alert('FEN скопирован в буфер обмена!');
+    function resetBoard() {
+        if(window.chess) {
+            window.chess.reset();
+            window.board.setPosition(window.chess.fen(), true);
+            $('#inputData').val('');
+            $('#bestMove').text('-');
+            $('#evaluation').text('-');
+            $('#status').text('Доска сброшена').css('color', '#bababa');
+        }
     }
 
-    // --- ЛОГИКА LOCALSTORAGE ---
+    function copyCurrentFen() {
+        var fen = window.chess ? window.chess.fen() : 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+        navigator.clipboard.writeText(fen);
+        alert('FEN скопирован!');
+    }
+
     function saveCurrentGame() {
-        var name = $('#saveName').val().trim() || "Партия от " + new Date().toLocaleTimeString();
-        var dataToSave = $('#inputData').val().trim() || currentLoadedFen;
-        
-        var games = JSON.parse(localStorage.getItem('chess_games') || '[]');
-        games.push({ name: name, data: dataToSave, fen: currentLoadedFen });
-        localStorage.setItem('chess_games', JSON.stringify(games));
-        
+        var name = $('#saveName').val().trim() || "Позиция " + new Date().toLocaleTimeString();
+        var fen = window.chess ? window.chess.fen() : 'start';
+        var games = JSON.parse(localStorage.getItem('chess_games_v2') || '[]');
+        games.push({ name: name, fen: fen });
+        localStorage.setItem('chess_games_v2', JSON.stringify(games));
         $('#saveName').val('');
         renderHistory();
     }
 
     function renderHistory() {
-        var games = JSON.parse(localStorage.getItem('chess_games') || '[]');
+        var games = JSON.parse(localStorage.getItem('chess_games_v2') || '[]');
         var $list = $('#historyList').empty();
-        
         games.forEach(function(game, index) {
             var $item = $('<li class="history-item"></li>');
-            $item.append('<span class="title" title="'+game.name+'">' + game.name + '</span>');
-            
-            var $deleteBtn = $('<button class="delete-btn">✕</button>');
-            $deleteBtn.click(function(e) {
+            $item.append('<span class="title">' + game.name + '</span>');
+            var $del = $('<button class="delete-btn" style="background:none;color:#ff5252;width:auto;padding:0;">✕</button>');
+            $del.click(function(e) {
                 e.stopPropagation();
-                deleteGame(index);
+                games.splice(index, 1);
+                localStorage.setItem('chess_games_v2', JSON.stringify(games));
+                renderHistory();
             });
-            
-            $item.append($deleteBtn);
+            $item.append($del);
             $item.click(function() {
-                $('#inputData').val(game.data);
-                board.position(game.fen);
-                currentLoadedFen = game.fen;
+                if(window.chess && window.board) {
+                    window.chess.load(game.fen);
+                    window.board.setPosition(game.fen, true);
+                    $('#inputData').val(game.fen);
+                }
             });
-            
             $list.append($item);
         });
     }
 
-    function deleteGame(index) {
-        var games = JSON.parse(localStorage.getItem('chess_games') || '[]');
-        games.splice(index, 1);
-        localStorage.setItem('chess_games', JSON.stringify(games));
-        renderHistory();
-    }
+    $(document).ready(function() {
+        setTimeout(renderHistory, 500);
+    });
 </script>
 
 </body>
@@ -276,7 +335,7 @@ def analyze():
         except Exception: return jsonify({"error": "Не удалось распарсить PGN"})
     else:
         try: board = chess.Board(raw_data)
-        except ValueError: return jsonify({"error": "Некорректный FEN или PGN"})
+        except ValueError: return jsonify({"error": "Некорректный FEN"})
 
     try:
         with chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH) as engine:
